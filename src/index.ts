@@ -15,7 +15,7 @@ export interface SaveReturnType {
   timestamp: number
 }
 
-interface BrowserlessOptions {
+export interface BrowserlessOptions {
   apiKey: string
   proxyServer?: string
   blockAds?: boolean
