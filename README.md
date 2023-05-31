@@ -1,6 +1,6 @@
 # save-html-screenshot
 
-A nodejs package that allows you to save html and screenshot of an url. It can also utilize the [browserless.io](browserless.io) to save the html and screenshot of the url.
+A nodejs package that allows you to save html and screenshot of an url. It can also utilize the [browserless.io](https://browserless.io) to save the html and screenshot of the url.
 
 [![NPM version](https://img.shields.io/npm/v/save-html-screenshot?color=a1b858&label=)](https://www.npmjs.com/package/save-html-screenshot)
 
