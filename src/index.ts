@@ -163,26 +163,14 @@ export class HtmlScreenshotSaver {
 
       await fsPromises.stat(folderPath)
 
-      try {
-        await this.runBrowser({
-          browserArgs:
+      await this.runBrowser({
+        browserArgs:
             '["--no-sandbox", "--window-size=1920,1080", "--start-maximized"]',
-          browserExecutablePath: await this.getChromeExecutablePath(),
-          url,
-          basePath: folderPath,
-          output: path.resolve(folderPath, 'index.html'),
-        })
-      }
-      catch (error) {
-        return {
-          status: 'error',
-          message: this.getErrorMessage(error),
-          webpage: '',
-          screenshot: '',
-          title: '',
-          timestamp: 0,
-        }
-      }
+        browserExecutablePath: await this.getChromeExecutablePath(),
+        url,
+        basePath: folderPath as string,
+        output: path.resolve(folderPath, 'index.html'),
+      })
 
       const metadata: {
         title: string
@@ -204,6 +192,9 @@ export class HtmlScreenshotSaver {
       }
     }
     catch (error) {
+      if (folderPath)
+        await fsPromises.rm(folderPath, { recursive: true, force: true })
+
       return {
         status: 'error',
         message: this.getErrorMessage(error),
