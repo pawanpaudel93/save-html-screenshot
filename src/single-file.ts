@@ -1,8 +1,8 @@
 import fs from 'node:fs'
 
 import fileUrl from 'file-url'
-import args from 'single-file-cli/args'
-import api from 'single-file-cli/single-file-cli-api'
+import args from 'single-file-cli/args.js'
+import api from 'single-file-cli/single-file-cli-api.js'
 
 async function run(options: {
   url: any
