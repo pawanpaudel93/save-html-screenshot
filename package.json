@@ -1,18 +1,18 @@
 {
-  "name": "pkg-name",
+  "name": "save-html-screenshot",
   "type": "module",
   "version": "0.0.0",
   "packageManager": "pnpm@8.1.1",
   "description": "",
-  "author": "Anthony Fu <anthonyfu117@hotmail.com>",
+  "author": "Pawan Paudel <pawanpaudel93@gmail.com>",
   "license": "MIT",
-  "funding": "https://github.com/sponsors/antfu",
-  "homepage": "https://github.com/antfu/pkg-name#readme",
+  "funding": "https://github.com/sponsors/pawanpaudel93",
+  "homepage": "https://github.com/pawanpaudel93/save-html-screenshot#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/antfu/pkg-name.git"
+    "url": "git+https://github.com/save-html-screenshot/save-html-screenshot.git"
   },
-  "bugs": "https://github.com/antfu/pkg-name/issues",
+  "bugs": "https://github.com/pawanpaudel93/save-html-screenshot/issues",
   "keywords": [],
   "sideEffects": false,
   "exports": {
@@ -45,6 +45,13 @@
     "start": "esno src/index.ts",
     "test": "vitest",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "file-url": "^4.0.0",
+    "find-chrome-bin": "^1.0.5",
+    "promisify-child-process": "^4.1.1",
+    "single-file-cli": "github:pawanpaudel93/single-file-cli",
+    "tempy": "^3.0.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^0.38.4",
