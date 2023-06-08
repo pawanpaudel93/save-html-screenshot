@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      file-url:
+        specifier: ^4.0.0
+        version: 4.0.0
       find-chrome-bin:
         specifier: ^1.0.5
         version: 1.0.5
@@ -2342,6 +2345,11 @@ packages:
   /file-url@3.0.0:
     resolution: {integrity: sha512-g872QGsHexznxkIAdK8UiZRe7SkE6kvylShU4Nsj8NvfvZag7S0QuQ4IgvPDkk75HxgjIVDwycFTDAgIiO4nDA==}
     engines: {node: '>=8'}
+    dev: false
+
+  /file-url@4.0.0:
+    resolution: {integrity: sha512-vRCdScQ6j3Ku6Kd7W1kZk9c++5SqD6Xz5Jotrjr/nkY714M14RFHy/AAVA2WQvpsqVAVgTbDrYyBpU205F0cLw==}
+    engines: {node: '>=12'}
     dev: false
 
   /fill-range@7.0.1:

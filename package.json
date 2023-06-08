@@ -47,6 +47,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "file-url": "^4.0.0",
     "find-chrome-bin": "^1.0.5",
     "pkg-dir": "^7.0.0",
     "promisify-child-process": "^4.1.1",

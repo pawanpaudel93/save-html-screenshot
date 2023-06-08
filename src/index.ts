@@ -1,10 +1,11 @@
-import { promises as fsPromises } from 'node:fs'
+import fs, { constants, promises as fsPromises } from 'node:fs'
 import path from 'node:path'
-import type { Buffer } from 'node:buffer'
+import { type Buffer } from 'node:buffer'
 import { findChrome } from 'find-chrome-bin'
-import { execFile } from 'promisify-child-process'
 import { temporaryDirectory } from 'tempy'
+import fileUrl from 'file-url'
 import { packageDirectory } from 'pkg-dir'
+import { execFile } from 'promisify-child-process'
 
 export interface SaveReturnType {
   status: 'success' | 'error'
@@ -119,6 +120,79 @@ export class HtmlScreenshotSaver {
     }
   }
 
+  private parseCookies(textValue: string) {
+    const httpOnlyRegExp = /^#HttpOnly_(.*)/
+    return textValue
+      .split(/\r\n|\n/)
+      .filter(
+        (line: string) =>
+          line.trim() && (!line.startsWith('#') || httpOnlyRegExp.test(line)),
+      )
+      .map((line: string) => {
+        const httpOnly = httpOnlyRegExp.test(line)
+        if (httpOnly)
+          line = line.replace(httpOnlyRegExp, '$1')
+
+        const values = line.split(/\t/)
+        if (values.length === 7) {
+          return {
+            domain: values[0],
+            path: values[2],
+            secure: values[3] === 'TRUE',
+            expires: (values[4] && Number(values[4])) || undefined,
+            name: values[5],
+            value: values[6],
+            httpOnly,
+          }
+        }
+        return undefined
+      })
+      .filter((cookieData: any) => cookieData)
+  }
+
+  private async run(options: {
+    url: any
+    urlsFile: fs.PathOrFileDescriptor
+    browserCookiesFile: fs.PathOrFileDescriptor
+    browserCookies: (
+      | {
+        domain: string
+        path: string
+        secure: boolean
+        expires: number | undefined
+        name: string
+        value: string
+        httpOnly: boolean
+      }
+      | undefined
+    )[]
+  }) {
+    const api = await import('single-file-cli/single-file-cli-api.js')
+
+    let urls: any[]
+    if (options.url && !api.VALID_URL_TEST.test(options.url))
+      options.url = fileUrl(options.url)
+
+    if (options.urlsFile)
+      urls = fs.readFileSync(options.urlsFile).toString().split('\n')
+    else urls = [options.url]
+
+    if (options.browserCookiesFile) {
+      const cookiesContent = fs
+        .readFileSync(options.browserCookiesFile)
+        .toString()
+      try {
+        options.browserCookies = JSON.parse(cookiesContent)
+      }
+      catch (error) {
+        options.browserCookies = this.parseCookies(cookiesContent)
+      }
+    }
+    const singlefile = await api.initialize(options)
+    await singlefile.capture(urls)
+    await singlefile.finish()
+  }
+
   private async runBrowser({
     browserArgs,
     url,
@@ -130,41 +204,57 @@ export class HtmlScreenshotSaver {
     basePath: string
     output: string
   }) {
-    let singleFilePath = 'single-file'
     try {
-      const packageDir = await packageDirectory()
-      if (packageDir) {
-        singleFilePath = path.resolve(
-          packageDir,
-          'node_modules',
-          '.bin',
-          'single-file',
-        )
-        await fsPromises.access(singleFilePath)
+      let singleFilePath = 'single-file'
+      try {
+        const packageDir = await packageDirectory()
+        if (packageDir) {
+          const tempFilePath = path.resolve(packageDir, 'node_modules', '.bin', 'single-file')
+          await fsPromises.access(tempFilePath, constants.F_OK)
+          singleFilePath = tempFilePath
+        }
       }
-    }
-    catch (error) {
-      singleFilePath = 'single-file'
-    }
+      catch (error) {}
 
-    const commands = [
+      const commands = [
       `--browser-args='${browserArgs}'`,
       url,
       `--output=${output}`,
       `--base-path=${basePath}`,
       `--user-agent="${USER_AGENT}"`,
-    ]
-    if (this.browserServer) {
-      commands.push(`--browser-server=${this.browserServer}`)
-    }
-    else {
-      const browserExecutablePath = await this.getChromeExecutablePath()
-      commands.push(`--browser-executable-path=${browserExecutablePath}`)
-    }
+      ]
+      if (this.browserServer) {
+        commands.push(`--browser-server=${this.browserServer}`)
+      }
+      else {
+        const browserExecutablePath = await this.getChromeExecutablePath()
+        commands.push(`--browser-executable-path=${browserExecutablePath}`)
+      }
 
-    const { stderr } = await execFile(singleFilePath, commands)
-    if (stderr)
-      throw stderr
+      const { stderr } = await execFile(singleFilePath, commands)
+      if (stderr)
+        throw stderr
+    }
+    catch (error) {
+      let args = await import('single-file-cli/args.js')
+      args = args?.default ?? args
+      const options = {
+        ...args,
+        basePath,
+        browserArgs,
+        url,
+        output,
+        userAgent: USER_AGENT,
+        browserWidth: 1920,
+        browserHeight: 1080,
+        browserServer: this.browserServer,
+      }
+
+      if (!this.browserServer)
+        options.browserExecutablePath = await this.getChromeExecutablePath()
+
+      await this.run(options)
+    }
   }
 
   public save = async (
@@ -197,7 +287,7 @@ export class HtmlScreenshotSaver {
 
       return {
         status: 'success',
-        message: '',
+        message: 'Saved successfully',
         webpage: path.join(folderPath, 'index.html'),
         screenshot: path.join(folderPath, 'screenshot.png'),
         title: metadata.title,
