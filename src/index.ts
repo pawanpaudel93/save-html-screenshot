@@ -4,7 +4,7 @@ import type { Buffer } from 'node:buffer'
 import { findChrome } from 'find-chrome-bin'
 import { execFile } from 'promisify-child-process'
 import { temporaryDirectory } from 'tempy'
-import { runBrowser } from './single-file'
+import { packageDirectory } from 'pkg-dir'
 
 export interface SaveReturnType {
   status: 'success' | 'error'
@@ -29,7 +29,8 @@ export interface BrowserlessOptions {
   timeout?: number
 }
 
-const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
+const USER_AGENT
+  = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
 
 export class HtmlScreenshotSaver {
   private browserServer?: string
@@ -104,9 +105,9 @@ export class HtmlScreenshotSaver {
   private getErrorMessage(error: unknown): string {
     if (
       typeof error === 'object'
-    && error !== null
-    && 'message' in error
-    && typeof (error as Record<string, unknown>).message === 'string'
+      && error !== null
+      && 'message' in error
+      && typeof (error as Record<string, unknown>).message === 'string'
     )
       return (error as { message: string }).message
 
@@ -120,43 +121,56 @@ export class HtmlScreenshotSaver {
 
   private async runBrowser({
     browserArgs,
-    browserExecutablePath,
     url,
     basePath,
     output,
   }: {
     browserArgs: string
-    browserExecutablePath: string
     url: string
     basePath: string
     output: string
   }) {
+    let singleFilePath = 'single-file'
     try {
-      await runBrowser({
-        browserArgs,
-        browserExecutablePath,
-        url,
-        basePath,
-        output,
-        userAgent: USER_AGENT,
-        browserServer: this.browserServer,
-      })
+      const packageDir = await packageDirectory()
+      if (packageDir) {
+        singleFilePath = path.resolve(
+          packageDir,
+          'node_modules',
+          '.bin',
+          'single-file',
+        )
+        await fsPromises.access(singleFilePath)
+      }
     }
     catch (error) {
-      const command = [
-        `--browser-executable-path=${browserExecutablePath}`,
-        `--browser-args='${browserArgs}'`,
-        url,
-        `--output=${output}`,
-        `--base-path=${basePath}`,
-        `--user-agent=${USER_AGENT}`,
-        `--browser-server=${this.browserServer}`,
-      ]
-      await execFile('./node_modules/single-file-cli/single-file', command)
+      singleFilePath = 'single-file'
     }
+
+    const commands = [
+      `--browser-args='${browserArgs}'`,
+      url,
+      `--output=${output}`,
+      `--base-path=${basePath}`,
+      `--user-agent="${USER_AGENT}"`,
+    ]
+    if (this.browserServer) {
+      commands.push(`--browser-server=${this.browserServer}`)
+    }
+    else {
+      const browserExecutablePath = await this.getChromeExecutablePath()
+      commands.push(`--browser-executable-path=${browserExecutablePath}`)
+    }
+
+    const { stderr } = await execFile(singleFilePath, commands)
+    if (stderr)
+      throw stderr
   }
 
-  public save = async (url: string, folderPath?: string): Promise<SaveReturnType> => {
+  public save = async (
+    url: string,
+    folderPath?: string,
+  ): Promise<SaveReturnType> => {
     try {
       if (!folderPath)
         folderPath = temporaryDirectory()
@@ -165,8 +179,7 @@ export class HtmlScreenshotSaver {
 
       await this.runBrowser({
         browserArgs:
-            '["--no-sandbox", "--window-size=1920,1080", "--start-maximized"]',
-        browserExecutablePath: await this.getChromeExecutablePath(),
+          '["--no-sandbox", "--window-size=1920,1080", "--start-maximized"]',
         url,
         basePath: folderPath as string,
         output: path.resolve(folderPath, 'index.html'),
