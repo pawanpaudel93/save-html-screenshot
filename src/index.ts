@@ -1,11 +1,13 @@
 import fs, { constants, promises as fsPromises } from 'node:fs'
-import path from 'node:path'
+import path, { join } from 'node:path'
 import { type Buffer } from 'node:buffer'
+import { homedir } from 'node:os'
 import { findChrome } from 'find-chrome-bin'
 import { temporaryDirectory } from 'tempy'
 import fileUrl from 'file-url'
 import { packageDirectory } from 'pkg-dir'
 import { execFile } from 'promisify-child-process'
+import * as puppeteer from 'puppeteer-core'
 
 export interface SaveReturnType {
   status: 'success' | 'error'
@@ -99,7 +101,25 @@ export class HtmlScreenshotSaver {
   }
 
   private async getChromeExecutablePath() {
-    const { executablePath } = await findChrome({})
+    const downloadPath
+      = process.env.PUPPETEER_DOWNLOAD_PATH
+      ?? process.env.npm_config_puppeteer_download_path
+      ?? process.env.npm_package_config_puppeteer_download_path
+
+    const cacheDirectory
+      = process.env.PUPPETEER_CACHE_DIR
+      ?? process.env.npm_config_puppeteer_cache_dir
+      ?? process.env.npm_package_config_puppeteer_cache_dir
+      ?? join(homedir(), '.cache', 'puppeteer')
+
+    const chromePath = downloadPath ?? cacheDirectory
+    const { executablePath } = await findChrome({
+      download: {
+        puppeteer,
+        path: chromePath,
+        revision: '1108766',
+      },
+    })
     return executablePath
   }
 
@@ -209,7 +229,12 @@ export class HtmlScreenshotSaver {
       try {
         const packageDir = await packageDirectory()
         if (packageDir) {
-          const tempFilePath = path.resolve(packageDir, 'node_modules', '.bin', 'single-file')
+          const tempFilePath = path.resolve(
+            packageDir,
+            'node_modules',
+            '.bin',
+            'single-file',
+          )
           await fsPromises.access(tempFilePath, constants.F_OK)
           singleFilePath = tempFilePath
         }
@@ -217,11 +242,11 @@ export class HtmlScreenshotSaver {
       catch (error) {}
 
       const commands = [
-      `--browser-args='${browserArgs}'`,
-      url,
-      `--output=${output}`,
-      `--base-path=${basePath}`,
-      `--user-agent="${USER_AGENT}"`,
+        `--browser-args='${browserArgs}'`,
+        url,
+        `--output=${output}`,
+        `--base-path=${basePath}`,
+        `--user-agent="${USER_AGENT}"`,
       ]
       if (this.browserServer) {
         commands.push(`--browser-server=${this.browserServer}`)
