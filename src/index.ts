@@ -20,29 +20,55 @@ export interface SaveReturnType {
 
 export interface BrowserlessOptions {
   apiKey: string
-  proxyServer?: string
   blockAds?: boolean
   stealth?: boolean
   userDataDir?: string
   keepalive?: number
-  windowSize?: string
   ignoreDefaultArgs?: string
-  headless?: boolean
-  userAgent?: string
   timeout?: number
 }
 
-const USER_AGENT
-  = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
+export interface BrowserOptions {
+  headless?: boolean
+  height?: number
+  width?: number
+  userAgent?: string
+  httpProxy?: {
+    server?: string
+    username?: string
+    password?: string
+  }
+}
+
+interface HtmlScreenshotSaverOptions {
+  browserOptions?: BrowserOptions
+  browserlessOptions?: BrowserlessOptions
+}
+
+const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
+
+const defaultBrowserOptions: BrowserOptions = {
+  headless: true,
+  height: 1080,
+  width: 1920,
+  userAgent: DEFAULT_USER_AGENT,
+  httpProxy: {
+    server: '',
+    username: '',
+    password: '',
+  },
+}
 
 export class HtmlScreenshotSaver {
   private browserServer?: string
+  private browserOptions?: BrowserOptions
 
-  constructor(browserlessOptions?: BrowserlessOptions) {
-    this.processBrowserless(browserlessOptions)
+  constructor(options?: HtmlScreenshotSaverOptions) {
+    this.browserOptions = { ...defaultBrowserOptions, ...options?.browserOptions }
+    this.processBrowserlessOptions(options?.browserlessOptions)
   }
 
-  private processBrowserless(options?: BrowserlessOptions) {
+  private processBrowserlessOptions(options?: BrowserlessOptions) {
     if (options?.apiKey)
       this.browserServer = this.constructBrowserlessUrl(options)
   }
@@ -50,50 +76,36 @@ export class HtmlScreenshotSaver {
   private constructBrowserlessUrl(options: BrowserlessOptions): string {
     const {
       apiKey,
-      proxyServer,
       blockAds,
       stealth,
       userDataDir,
       keepalive,
-      windowSize,
       ignoreDefaultArgs,
-      headless,
-      userAgent,
       timeout,
     } = options
 
-    let url = `wss://chrome.browserless.io/?token=${apiKey}`
-
-    if (proxyServer)
-      url += `&--proxy-server=${proxyServer}`
-
+    const params: string[] = []
+    params.push(`token=${apiKey}`)
+    if (this.browserOptions?.httpProxy?.server)
+      params.push(`--proxy-server=${this.browserOptions.httpProxy.server}`)
     if (blockAds)
-      url += '&blockAds'
-
+      params.push('blockAds')
     if (stealth)
-      url += '&stealth'
-
+      params.push('stealth')
     if (userDataDir)
-      url += `&--user-data-dir=${userDataDir}`
-
+      params.push(`--user-data-dir=${userDataDir}`)
     if (keepalive)
-      url += `&keepalive=${keepalive}`
-
-    if (windowSize)
-      url += `&--window-size=${windowSize}`
-
+      params.push(`keepalive=${keepalive}`)
     if (ignoreDefaultArgs)
-      url += `&ignoreDefaultArgs=${ignoreDefaultArgs}`
-
-    if (headless !== undefined)
-      url += `&headless=${headless}`
-
+      params.push(`ignoreDefaultArgs=${ignoreDefaultArgs}`)
+    if (this.browserOptions?.headless !== undefined)
+      params.push(`headless=${this.browserOptions.headless}`)
     if (timeout)
-      url += `&timeout=${timeout}`
+      params.push(`timeout=${timeout}`)
+    params.push(`--window-size=${this.browserOptions?.width},${this.browserOptions?.height}`)
+    params.push(`user-agent=${this.browserOptions?.userAgent ?? DEFAULT_USER_AGENT}`)
 
-    url += `&user-agent=${userAgent || USER_AGENT}`
-
-    return url
+    return `wss://chrome.browserless.io/?${params.join('&')}`
   }
 
   private async readFileAsBuffer(filePath: string): Promise<Buffer> {
@@ -214,16 +226,15 @@ export class HtmlScreenshotSaver {
   }
 
   private async runBrowser({
-    browserArgs,
     url,
     basePath,
     output,
   }: {
-    browserArgs: string
     url: string
     basePath: string
     output: string
   }) {
+    const browserArgs = `["--no-sandbox", "--window-size=${this.browserOptions?.width},${this.browserOptions?.height}", "--start-maximized"]`
     try {
       let singleFilePath = 'single-file'
       try {
@@ -246,7 +257,13 @@ export class HtmlScreenshotSaver {
         url,
         `--output=${output}`,
         `--base-path=${basePath}`,
-        `--user-agent="${USER_AGENT}"`,
+        `--user-agent="${this.browserOptions?.userAgent}"`,
+        `--browser-headless=${this.browserOptions?.headless}`,
+        `--browser-width=${this.browserOptions?.width}`,
+        `--browser-height=${this.browserOptions?.height}`,
+        `--http-proxy-server=${this.browserOptions?.httpProxy?.server ?? ''}`,
+        `--http-proxy-username=${this.browserOptions?.httpProxy?.username ?? ''}`,
+        `--http-proxy-password=${this.browserOptions?.httpProxy?.password ?? ''}`,
       ]
       if (this.browserServer) {
         commands.push(`--browser-server=${this.browserServer}`)
@@ -269,10 +286,14 @@ export class HtmlScreenshotSaver {
         browserArgs,
         url,
         output,
-        userAgent: USER_AGENT,
-        browserWidth: 1920,
-        browserHeight: 1080,
+        userAgent: this.browserOptions?.userAgent,
+        browserWidth: this.browserOptions?.width,
+        browserHeight: this.browserOptions?.height,
         browserServer: this.browserServer,
+        browserHeadless: this.browserOptions?.headless,
+        httpProxyServer: this.browserOptions?.httpProxy?.server ?? '',
+        httpProxyUsername: this.browserOptions?.httpProxy?.username ?? '',
+        httpProxyPassword: this.browserOptions?.httpProxy?.password ?? '',
       }
 
       if (!this.browserServer)
@@ -293,8 +314,6 @@ export class HtmlScreenshotSaver {
       await fsPromises.stat(folderPath)
 
       await this.runBrowser({
-        browserArgs:
-          '["--no-sandbox", "--window-size=1920,1080", "--start-maximized"]',
         url,
         basePath: folderPath as string,
         output: path.resolve(folderPath, 'index.html'),
