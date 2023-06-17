@@ -9,7 +9,7 @@ import { packageDirectory } from 'pkg-dir'
 import { execFile } from 'promisify-child-process'
 import * as puppeteer from 'puppeteer-core'
 
-export interface SaveReturnType {
+export interface SaveResult {
   status: 'success' | 'error'
   message: string
   webpage: string
@@ -28,7 +28,7 @@ export interface BrowserlessOptions {
   timeout?: number
 }
 
-export interface BrowserOptions {
+export interface HtmlScreenshotSaverOptions {
   headless?: boolean
   height?: number
   width?: number
@@ -38,16 +38,12 @@ export interface BrowserOptions {
     username?: string
     password?: string
   }
-}
-
-interface HtmlScreenshotSaverOptions {
-  browserOptions?: BrowserOptions
   browserlessOptions?: BrowserlessOptions
 }
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
 
-const defaultBrowserOptions: BrowserOptions = {
+const defaultOptions: HtmlScreenshotSaverOptions = {
   headless: true,
   height: 1080,
   width: 1920,
@@ -61,10 +57,10 @@ const defaultBrowserOptions: BrowserOptions = {
 
 export class HtmlScreenshotSaver {
   private browserServer?: string
-  private browserOptions?: BrowserOptions
+  private browserOptions?: HtmlScreenshotSaverOptions
 
   constructor(options?: HtmlScreenshotSaverOptions) {
-    this.browserOptions = { ...defaultBrowserOptions, ...options?.browserOptions }
+    this.browserOptions = { ...defaultOptions, ...options }
     this.processBrowserlessOptions(options?.browserlessOptions)
   }
 
@@ -306,7 +302,7 @@ export class HtmlScreenshotSaver {
   public save = async (
     url: string,
     folderPath?: string,
-  ): Promise<SaveReturnType> => {
+  ): Promise<SaveResult> => {
     try {
       if (!folderPath)
         folderPath = temporaryDirectory()
