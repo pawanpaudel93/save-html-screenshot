@@ -1,7 +1,7 @@
 {
   "name": "save-html-screenshot",
   "type": "module",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "packageManager": "pnpm@8.6.2",
   "description": "A nodejs package that allows you to save html and screenshot of an url. It utilizes the locally installed Chrome browser or [browserless.io](https://browserless.io) using puppeteer to save the html and screenshot of the url.",
   "author": "Pawan Paudel <pawanpaudel93@gmail.com>",
