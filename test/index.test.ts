@@ -9,6 +9,6 @@ describe('should', () => {
     // eslint-disable-next-line no-console
     console.log(result)
     expect(result.status).toEqual('success')
-    await fsPromises.rm(result.webpage.replace('index.html', ''), { recursive: true, force: true })
+    await fsPromises.rm(result.savedFolderPath, { recursive: true, force: true })
   }, 60000)
 })

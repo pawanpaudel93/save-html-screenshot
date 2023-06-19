@@ -2,16 +2,19 @@ import fs, { constants, promises as fsPromises } from 'node:fs'
 import path, { join } from 'node:path'
 import { type Buffer } from 'node:buffer'
 import { homedir } from 'node:os'
-import { findChrome } from 'find-chrome-bin'
-import { temporaryDirectory } from 'tempy'
+import { fileURLToPath } from 'node:url'
 import fileUrl from 'file-url'
-import { packageDirectory } from 'pkg-dir'
+import { directory } from 'tempy'
+import { findChrome } from 'find-chrome-bin'
 import { execFile } from 'promisify-child-process'
-import * as puppeteer from 'puppeteer-core'
+import { BrowserFetcher } from 'puppeteer-core'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export interface SaveResult {
   status: 'success' | 'error'
   message: string
+  savedFolderPath: string
   webpage: string
   screenshot: string
   title: string
@@ -99,7 +102,7 @@ export class HtmlScreenshotSaver {
     if (timeout)
       params.push(`timeout=${timeout}`)
     params.push(`--window-size=${this.browserOptions?.width},${this.browserOptions?.height}`)
-    params.push(`user-agent=${this.browserOptions?.userAgent ?? DEFAULT_USER_AGENT}`)
+    params.push(`--user-agent=${this.browserOptions?.userAgent ?? DEFAULT_USER_AGENT}`)
 
     return `wss://chrome.browserless.io/?${params.join('&')}`
   }
@@ -123,9 +126,9 @@ export class HtmlScreenshotSaver {
     const chromePath = downloadPath ?? cacheDirectory
     const { executablePath } = await findChrome({
       download: {
-        puppeteer,
+        puppeteer: { BrowserFetcher },
         path: chromePath,
-        revision: '1108766',
+        revision: '1095492',
       },
     })
     return executablePath
@@ -234,17 +237,15 @@ export class HtmlScreenshotSaver {
     try {
       let singleFilePath = 'single-file'
       try {
-        const packageDir = await packageDirectory()
-        if (packageDir) {
-          const tempFilePath = path.resolve(
-            packageDir,
-            'node_modules',
-            '.bin',
-            'single-file',
-          )
-          await fsPromises.access(tempFilePath, constants.F_OK)
-          singleFilePath = tempFilePath
-        }
+        const packageDir = path.dirname(__dirname)
+        const tempFilePath = path.resolve(
+          packageDir,
+          'node_modules',
+          'single-file-cli',
+          'single-file',
+        )
+        await fsPromises.access(tempFilePath, constants.F_OK)
+        singleFilePath = tempFilePath
       }
       catch (error) {}
 
@@ -305,9 +306,9 @@ export class HtmlScreenshotSaver {
   ): Promise<SaveResult> => {
     try {
       if (!folderPath)
-        folderPath = temporaryDirectory()
+        folderPath = directory()
 
-      await fsPromises.stat(folderPath)
+      await fsPromises.access(folderPath)
 
       await this.runBrowser({
         url,
@@ -328,6 +329,7 @@ export class HtmlScreenshotSaver {
       return {
         status: 'success',
         message: 'Saved successfully',
+        savedFolderPath: folderPath,
         webpage: path.join(folderPath, 'index.html'),
         screenshot: path.join(folderPath, 'screenshot.png'),
         title: metadata.title,
@@ -341,6 +343,7 @@ export class HtmlScreenshotSaver {
       return {
         status: 'error',
         message: this.getErrorMessage(error),
+        savedFolderPath: '',
         webpage: '',
         screenshot: '',
         title: '',
