@@ -1,15 +1,13 @@
-import fs, { constants, promises as fsPromises } from 'node:fs'
+import { promises as fsPromises } from 'node:fs'
 import path, { join } from 'node:path'
 import { type Buffer } from 'node:buffer'
 import { homedir } from 'node:os'
-import { fileURLToPath } from 'node:url'
-import fileUrl from 'file-url'
 import { directory } from 'tempy'
 import { findChrome } from 'find-chrome-bin'
-import { execFile } from 'promisify-child-process'
 import { BrowserFetcher } from 'puppeteer-core'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// @ts-expect-error no declaration
+import { defaultArgs, runBrowser } from '@pawanpaudel93/single-file'
 
 export interface SaveResult {
   status: 'success' | 'error'
@@ -151,79 +149,6 @@ export class HtmlScreenshotSaver {
     }
   }
 
-  private parseCookies(textValue: string) {
-    const httpOnlyRegExp = /^#HttpOnly_(.*)/
-    return textValue
-      .split(/\r\n|\n/)
-      .filter(
-        (line: string) =>
-          line.trim() && (!line.startsWith('#') || httpOnlyRegExp.test(line)),
-      )
-      .map((line: string) => {
-        const httpOnly = httpOnlyRegExp.test(line)
-        if (httpOnly)
-          line = line.replace(httpOnlyRegExp, '$1')
-
-        const values = line.split(/\t/)
-        if (values.length === 7) {
-          return {
-            domain: values[0],
-            path: values[2],
-            secure: values[3] === 'TRUE',
-            expires: (values[4] && Number(values[4])) || undefined,
-            name: values[5],
-            value: values[6],
-            httpOnly,
-          }
-        }
-        return undefined
-      })
-      .filter((cookieData: any) => cookieData)
-  }
-
-  private async run(options: {
-    url: any
-    urlsFile: fs.PathOrFileDescriptor
-    browserCookiesFile: fs.PathOrFileDescriptor
-    browserCookies: (
-      | {
-        domain: string
-        path: string
-        secure: boolean
-        expires: number | undefined
-        name: string
-        value: string
-        httpOnly: boolean
-      }
-      | undefined
-    )[]
-  }) {
-    const api = await import('single-file-cli/single-file-cli-api.js')
-
-    let urls: any[]
-    if (options.url && !api.VALID_URL_TEST.test(options.url))
-      options.url = fileUrl(options.url)
-
-    if (options.urlsFile)
-      urls = fs.readFileSync(options.urlsFile).toString().split('\n')
-    else urls = [options.url]
-
-    if (options.browserCookiesFile) {
-      const cookiesContent = fs
-        .readFileSync(options.browserCookiesFile)
-        .toString()
-      try {
-        options.browserCookies = JSON.parse(cookiesContent)
-      }
-      catch (error) {
-        options.browserCookies = this.parseCookies(cookiesContent)
-      }
-    }
-    const singlefile = await api.initialize(options)
-    await singlefile.capture(urls)
-    await singlefile.finish()
-  }
-
   private async runBrowser({
     url,
     basePath,
@@ -234,70 +159,26 @@ export class HtmlScreenshotSaver {
     output: string
   }) {
     const browserArgs = `["--no-sandbox", "--window-size=${this.browserOptions?.width},${this.browserOptions?.height}", "--start-maximized"]`
-    try {
-      let singleFilePath = 'single-file'
-      try {
-        const packageDir = path.dirname(__dirname)
-        const tempFilePath = path.resolve(
-          packageDir,
-          'node_modules',
-          'single-file-cli',
-          'single-file',
-        )
-        await fsPromises.access(tempFilePath, constants.F_OK)
-        singleFilePath = tempFilePath
-      }
-      catch (error) {}
-
-      const commands = [
-        `--browser-args='${browserArgs}'`,
-        url,
-        `--output=${output}`,
-        `--base-path=${basePath}`,
-        `--user-agent="${this.browserOptions?.userAgent}"`,
-        `--browser-headless=${this.browserOptions?.headless}`,
-        `--browser-width=${this.browserOptions?.width}`,
-        `--browser-height=${this.browserOptions?.height}`,
-        `--http-proxy-server=${this.browserOptions?.httpProxy?.server ?? ''}`,
-        `--http-proxy-username=${this.browserOptions?.httpProxy?.username ?? ''}`,
-        `--http-proxy-password=${this.browserOptions?.httpProxy?.password ?? ''}`,
-      ]
-      if (this.browserServer) {
-        commands.push(`--browser-server=${this.browserServer}`)
-      }
-      else {
-        const browserExecutablePath = await this.getChromeExecutablePath()
-        commands.push(`--browser-executable-path=${browserExecutablePath}`)
-      }
-
-      const { stderr } = await execFile(singleFilePath, commands)
-      if (stderr)
-        throw stderr
+    const options = {
+      ...defaultArgs,
+      basePath,
+      browserArgs,
+      url,
+      output,
+      userAgent: this.browserOptions?.userAgent,
+      browserWidth: this.browserOptions?.width,
+      browserHeight: this.browserOptions?.height,
+      browserServer: this.browserServer,
+      browserHeadless: this.browserOptions?.headless,
+      httpProxyServer: this.browserOptions?.httpProxy?.server ?? '',
+      httpProxyUsername: this.browserOptions?.httpProxy?.username ?? '',
+      httpProxyPassword: this.browserOptions?.httpProxy?.password ?? '',
     }
-    catch (error) {
-      let args = await import('single-file-cli/args.js')
-      args = args?.default ?? args
-      const options = {
-        ...args,
-        basePath,
-        browserArgs,
-        url,
-        output,
-        userAgent: this.browserOptions?.userAgent,
-        browserWidth: this.browserOptions?.width,
-        browserHeight: this.browserOptions?.height,
-        browserServer: this.browserServer,
-        browserHeadless: this.browserOptions?.headless,
-        httpProxyServer: this.browserOptions?.httpProxy?.server ?? '',
-        httpProxyUsername: this.browserOptions?.httpProxy?.username ?? '',
-        httpProxyPassword: this.browserOptions?.httpProxy?.password ?? '',
-      }
 
-      if (!this.browserServer)
-        options.browserExecutablePath = await this.getChromeExecutablePath()
+    if (!this.browserServer)
+      options.browserExecutablePath = await this.getChromeExecutablePath()
 
-      await this.run(options)
-    }
+    await runBrowser(options)
   }
 
   public save = async (
