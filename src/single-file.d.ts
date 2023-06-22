@@ -1,0 +1,1 @@
+declare module '@pawanpaudel93/single-file';

@@ -25,31 +25,31 @@ importers:
         version: 1.0.1
     devDependencies:
       '@antfu/eslint-config':
-        specifier: ^0.38.4
+        specifier: ^0.38.6
         version: 0.38.6(eslint@8.43.0)(typescript@5.1.3)
       '@antfu/ni':
-        specifier: ^0.21.2
+        specifier: ^0.21.4
         version: 0.21.4
       '@antfu/utils':
-        specifier: ^0.7.2
+        specifier: ^0.7.4
         version: 0.7.4
       '@types/node':
-        specifier: ^18.15.11
+        specifier: ^18.16.18
         version: 18.16.18
       bumpp:
-        specifier: ^9.1.0
+        specifier: ^9.1.1
         version: 9.1.1
       eslint:
-        specifier: ^8.37.0
+        specifier: ^8.43.0
         version: 8.43.0
       esno:
         specifier: ^0.16.3
         version: 0.16.3
       lint-staged:
-        specifier: ^13.2.0
+        specifier: ^13.2.2
         version: 13.2.2
       pnpm:
-        specifier: ^8.1.1
+        specifier: ^8.6.3
         version: 8.6.3
       rimraf:
         specifier: ^4.4.1
@@ -57,14 +57,11 @@ importers:
       simple-git-hooks:
         specifier: ^2.8.1
         version: 2.8.1
-      typescript:
-        specifier: ^5.0.3
-        version: 5.1.3
       unbuild:
-        specifier: ^1.2.0
+        specifier: ^1.2.1
         version: 1.2.1
       vite:
-        specifier: ^4.2.1
+        specifier: ^4.3.9
         version: 4.3.9(@types/node@18.16.18)
       vitest:
         specifier: ^0.29.8
@@ -1265,7 +1262,7 @@ packages:
     hasBin: true
     dependencies:
       caniuse-lite: 1.0.30001506
-      electron-to-chromium: 1.4.436
+      electron-to-chromium: 1.4.437
       node-releases: 2.0.12
       update-browserslist-db: 1.0.11(browserslist@4.21.9)
     dev: true
@@ -1732,8 +1729,8 @@ packages:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
     dev: true
 
-  /electron-to-chromium@1.4.436:
-    resolution: {integrity: sha512-aktOxo8fnrMC8vOIBMVS3PXbT1nrPQ+SouUuN7Y0a+Rw3pOMrvIV92Ybnax7x4tugA+ZpYA5fOHTby7ama8OQQ==}
+  /electron-to-chromium@1.4.437:
+    resolution: {integrity: sha512-ZFekRuBOHUXp21wrR5lshT6pZa/KmjkhKBAtmZz4NN5sCWlHOk3kdhiwFINrDBsRLX6FjyBAb1TRN+KBeNlyzQ==}
     dev: true
 
   /emoji-regex@8.0.0:

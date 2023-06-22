@@ -5,8 +5,6 @@ import { homedir } from 'node:os'
 import { directory } from 'tempy'
 import { findChrome } from 'find-chrome-bin'
 import { BrowserFetcher } from 'puppeteer-core'
-
-// @ts-expect-error no declaration
 import { defaultArgs, runBrowser } from '@pawanpaudel93/single-file'
 
 export interface SaveResult {
