@@ -4,7 +4,9 @@ import { HtmlScreenshotSaver } from '../src'
 
 describe('should', () => {
   it('save url html and screenshot', async () => {
-    const saver = new HtmlScreenshotSaver()
+    const saver = new HtmlScreenshotSaver({
+      saveScreenshot: true,
+    })
     const result = await saver.save('https://github.com/pawanpaudel93')
     // eslint-disable-next-line no-console
     console.log(result)

@@ -5,14 +5,14 @@ import { homedir } from 'node:os'
 import { directory } from 'tempy'
 import { findChrome } from 'find-chrome-bin'
 import { BrowserFetcher } from 'puppeteer-core'
-import { defaultArgs, runBrowser } from '@pawanpaudel93/single-file'
+import { saveSingleFile } from '@pawanpaudel93/single-file'
 
 export interface SaveResult {
   status: 'success' | 'error'
   message: string
   savedFolderPath: string
   webpage: string
-  screenshot: string
+  screenshot?: string
   title: string
   timestamp: number
 }
@@ -32,6 +32,7 @@ export interface HtmlScreenshotSaverOptions {
   height?: number
   width?: number
   userAgent?: string
+  saveScreenshot: boolean
   httpProxy?: {
     server?: string
     username?: string
@@ -47,6 +48,7 @@ const defaultOptions: HtmlScreenshotSaverOptions = {
   height: 1080,
   width: 1920,
   userAgent: DEFAULT_USER_AGENT,
+  saveScreenshot: false,
   httpProxy: {
     server: '',
     username: '',
@@ -158,11 +160,11 @@ export class HtmlScreenshotSaver {
   }) {
     const browserArgs = `["--no-sandbox", "--window-size=${this.browserOptions?.width},${this.browserOptions?.height}", "--start-maximized"]`
     const options = {
-      ...defaultArgs,
       basePath,
       browserArgs,
       url,
       output,
+      saveScreenshot: this.browserOptions?.saveScreenshot,
       userAgent: this.browserOptions?.userAgent,
       browserWidth: this.browserOptions?.width,
       browserHeight: this.browserOptions?.height,
@@ -171,12 +173,12 @@ export class HtmlScreenshotSaver {
       httpProxyServer: this.browserOptions?.httpProxy?.server ?? '',
       httpProxyUsername: this.browserOptions?.httpProxy?.username ?? '',
       httpProxyPassword: this.browserOptions?.httpProxy?.password ?? '',
-    }
+    } as any
 
     if (!this.browserServer)
       options.browserExecutablePath = await this.getChromeExecutablePath()
 
-    await runBrowser(options)
+    await saveSingleFile(options)
   }
 
   public save = async (
@@ -210,7 +212,7 @@ export class HtmlScreenshotSaver {
         message: 'Saved successfully',
         savedFolderPath: folderPath,
         webpage: path.join(folderPath, 'index.html'),
-        screenshot: path.join(folderPath, 'screenshot.png'),
+        screenshot: this.browserOptions?.saveScreenshot ? path.join(folderPath, 'screenshot.png') : undefined,
         title: metadata.title,
         timestamp,
       }
