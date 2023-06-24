@@ -16,19 +16,41 @@ const defaultOptions: HtmlScreenshotSaverOptions = {
   userAgent: DEFAULT_USER_AGENT,
 }
 
+/**
+ * Represents a class for saving HTML and screenshots.
+ */
 export class HtmlScreenshotSaver {
+  /**
+   * The options for the browser.
+   * @private
+   */
   private browserOptions: HtmlScreenshotSaverOptions
 
+  /**
+   * Constructs a new HtmlScreenshotSaver instance.
+   * @param {HtmlScreenshotSaverOptions} [options] - The options for the HtmlScreenshotSaver.
+   */
   constructor(options?: HtmlScreenshotSaverOptions) {
     this.browserOptions = { ...defaultOptions, ...options }
     this.processBrowserlessOptions(options?.browserlessOptions)
   }
 
+  /**
+   * Processes the options for the browserless service.
+   * @private
+   * @param {BrowserlessOptions} [options] - The options for the browserless service.
+   */
   private processBrowserlessOptions(options?: BrowserlessOptions) {
     if (options?.apiKey)
       this.browserOptions.browserServer = this.constructBrowserlessUrl(options)
   }
 
+  /**
+   * Constructs the URL for the browserless service.
+   * @private
+   * @param {BrowserlessOptions} options - The options for the browserless service.
+   * @returns {string} The constructed URL.
+   */
   private constructBrowserlessUrl(options: BrowserlessOptions): string {
     const {
       apiKey,
@@ -64,11 +86,22 @@ export class HtmlScreenshotSaver {
     return `wss://chrome.browserless.io/?${params.join('&')}`
   }
 
+  /**
+   * Reads a file as a buffer.
+   * @private
+   * @param {string} filePath - The path to the file.
+   * @returns {Promise<Buffer>} A promise that resolves with the file content as a Buffer.
+   */
   private async readFileAsBuffer(filePath: string): Promise<Buffer> {
     return await fsPromises.readFile(filePath)
   }
 
-  private async getChromeExecutablePath() {
+  /**
+   * Gets the path to the Chrome executable.
+   * @private
+   * @returns {Promise<string>} A promise that resolves with the path to the Chrome executable.
+   */
+  private async getChromeExecutablePath(): Promise<string> {
     const downloadPath
       = process.env.PUPPETEER_DOWNLOAD_PATH
       ?? process.env.npm_config_puppeteer_download_path
@@ -91,6 +124,12 @@ export class HtmlScreenshotSaver {
     return executablePath
   }
 
+  /**
+   * Gets the error message from an error object.
+   * @private
+   * @param {unknown} error - The error object.
+   * @returns {string} The error message.
+   */
   private getErrorMessage(error: unknown): string {
     if (
       typeof error === 'object'
@@ -108,13 +147,21 @@ export class HtmlScreenshotSaver {
     }
   }
 
+  /**
+   * Runs the browser to save the HTML and screenshot.
+   * @private
+   * @param {Object} params - The parameters for running the browser.
+   * @param {string} params.url - The URL to save.
+   * @param {string} params.outputDirectory - The output directory to save the files.
+   * @returns {Promise<void>} A promise that resolves when the browser has finished saving the files.
+   */
   private async runBrowser({
     url,
     outputDirectory,
   }: {
     url: string
     outputDirectory: string
-  }) {
+  }): Promise<void> {
     const browserArgs = `["--no-sandbox", "--window-size=${this.browserOptions?.browserWidth},${this.browserOptions?.browserHeight}", "--start-maximized"]`
     const options = {
       browserArgs,
@@ -130,11 +177,11 @@ export class HtmlScreenshotSaver {
   }
 
   /**
-   * Save html and screenshot
-   *
-   * @param {string} url URL to save
-   * @param {string} outputDirectory Output Directory to save the files.
-   * @returns {Promise<SaveResult>}
+   * Saves the HTML and screenshot.
+   * @public
+   * @param {string} url - The URL to save.
+   * @param {string} [outputDirectory] - The output directory to save the files. If not specified, a temporary directory will be created.
+   * @returns {Promise<SaveResult>} A promise that resolves with the result of the save operation.
    */
 
   public save = async (
