@@ -9,7 +9,7 @@ A node package that allows you to save HTML and screenshots of an URL. It utiliz
 - Complete web page saving as a single HTML file.
 - Option to save HTML and URL screenshots.
 - Automatic Chrome browser download if not installed.
-- Browserless functionality supported.
+- Browserless.io supported.
 
 ## Installation
 
@@ -47,24 +47,7 @@ Create an instance of the HtmlScreenshotSaver class with options:
 const saver = new HtmlScreenshotSaver(options)
 ```
 
-The `options` parameter is an object with the following properties:
-
-- `headless` (optional): Set whether to run the browser in headless mode. Default: `true`
-- `userAgent` (optional): Set a custom user agent. Default: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
-- `width` (optional): Specify the window width. Default: `1920`
-- `height` (optional): Specify the window height. Default: `1080`
-- `httpProxy` (optional): An object with the following properties for proxy.
-  - `server` (optional): The URL of the proxy server to use.
-  - `username` (optional): The username of the proxy server to use.
-  - `password` (optional): The password of the proxy server to use.
-- `browserlessOptions` (optional): An object with the following properties
-  - `apiKey` (required): Your browserless.io API key.
-  - `blockAds` (optional): Enable ad-blocking.
-  - `stealth` (optional): Enable stealth mode.
-  - `userDataDir` (optional): Path to the user data directory.
-  - `keepalive` (optional): Keep the browser session alive for a specified duration (in milliseconds).
-  - `ignoreDefaultArgs` (optional): Specify a comma-separated list of Chrome flags to ignore.
-  - `timeout` (optional): Set the timeout (in milliseconds) for requests.
+See here on what options can be passed: [HtmlScreenshotSaverOptions](https://github.com/pawanpaudel93/save-html-screenshot/blob/fd689be68ceeb5eafc8622f6a1542843870de91d/src/types.ts#L44C1-L44C1)
 
 ### Save Method
 
@@ -144,6 +127,10 @@ else {
   console.error('Error saving screenshot:', result.message)
 }
 ```
+
+## Related
+
+- [single-file](https://github.com/pawanpaudel93/single-file)
 
 ## License
 
