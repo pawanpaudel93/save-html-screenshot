@@ -117,9 +117,9 @@ export class HtmlScreenshotSaver {
   }) {
     const browserArgs = `["--no-sandbox", "--window-size=${this.browserOptions?.browserWidth},${this.browserOptions?.browserHeight}", "--start-maximized"]`
     const options = {
+      browserArgs,
       ...this.browserOptions,
       outputDirectory,
-      browserArgs,
       url,
     } as HtmlScreenshotSaverOptions
 
@@ -128,6 +128,14 @@ export class HtmlScreenshotSaver {
 
     await saveSingleFile(options)
   }
+
+  /**
+   * Save html and screenshot
+   *
+   * @param {string} url URL to save
+   * @param {string} outputDirectory Output Directory to save the files.
+   * @returns {Promise<SaveResult>}
+   */
 
   public save = async (
     url: string,
@@ -157,7 +165,7 @@ export class HtmlScreenshotSaver {
       return {
         status: 'success',
         message: 'Saved successfully',
-        savedFolderPath: outputDirectory,
+        savedDirectory: outputDirectory,
         webpage: path.join(outputDirectory, 'index.html'),
         screenshot: this.browserOptions?.saveScreenshot ? path.join(outputDirectory, 'screenshot.png') : undefined,
         title: metadata.title,
@@ -171,7 +179,7 @@ export class HtmlScreenshotSaver {
       return {
         status: 'error',
         message: this.getErrorMessage(error),
-        savedFolderPath: '',
+        savedDirectory: '',
         webpage: '',
         screenshot: '',
         title: '',

@@ -82,7 +82,7 @@ The method returns a `SaveResult` object with the following properties:
 
 - `status`: Indicates the status of the operation, either 'success' or 'error'.
 - `message`: Provides additional information or an error message if the operation failed.
-- `savedFoderPath`: The path where the HTML webpage and screenshot are saved.
+- `savedDirectory`: The path where the HTML webpage and screenshot are saved.
 - `webpage`: The path to the saved HTML webpage.
 - `screenshot`: The path to the saved screenshot image.
 - `title`: The title of the captured webpage.
