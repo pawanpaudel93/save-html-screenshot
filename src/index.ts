@@ -188,3 +188,5 @@ export class HtmlScreenshotSaver {
     }
   }
 }
+
+export type { BrowserlessOptions, HtmlScreenshotSaverOptions, SaveResult } from './types'
