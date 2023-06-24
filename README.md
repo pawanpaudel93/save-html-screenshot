@@ -1,8 +1,15 @@
 # save-html-screenshot
 
-A nodejs package that allows you to save html and screenshot of an url. It utilizes the locally installed Chrome browser or [browserless.io](https://browserless.io) using puppeteer to save the html and screenshot of the url.
+A node package that allows you to save HTML and screenshots of an URL. It utilizes the locally installed Chrome browser or [browserless.io](https://browserless.io) using Puppeteer to save the html and screenshot of the URL.
 
 [![NPM version](https://img.shields.io/npm/v/save-html-screenshot?color=green&label=version)](https://www.npmjs.com/package/save-html-screenshot)
+
+## Features
+
+- Complete web page saving as a single HTML file.
+- Option to save HTML and URL screenshots.
+- Automatic Chrome browser download if not installed.
+- Browserless functionality supported.
 
 ## Installation
 
@@ -46,7 +53,7 @@ The `options` parameter is an object with the following properties:
 - `userAgent` (optional): Set a custom user agent. Default: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36`
 - `width` (optional): Specify the window width. Default: `1920`
 - `height` (optional): Specify the window height. Default: `1080`
-- `httpProxy` (optional): An object with following properties for proxy.
+- `httpProxy` (optional): An object with the following properties for proxy.
   - `server` (optional): The URL of the proxy server to use.
   - `username` (optional): The username of the proxy server to use.
   - `password` (optional): The password of the proxy server to use.
@@ -75,7 +82,7 @@ The method returns a `SaveResult` object with the following properties:
 
 - `status`: Indicates the status of the operation, either 'success' or 'error'.
 - `message`: Provides additional information or an error message if the operation failed.
-- `savedFoderPath`: The path where HTML webpage and screenshot are saved.
+- `savedFoderPath`: The path where the HTML webpage and screenshot are saved.
 - `webpage`: The path to the saved HTML webpage.
 - `screenshot`: The path to the saved screenshot image.
 - `title`: The title of the captured webpage.
@@ -113,7 +120,7 @@ else {
 }
 ```
 
-In the above example, replace 'your-api-key' with your actual browserless.io API key and specify the desired URL and folder path.
+In the above example, replace 'your-API-key' with your actual browserless.io API key and specify the desired URL and folder path.
 
 Without using browserless,
 
