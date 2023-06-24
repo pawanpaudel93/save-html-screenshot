@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@pawanpaudel93/single-file':
-        specifier: ^1.0.5
-        version: 1.0.5(typescript@5.1.3)
+        specifier: ^1.0.6
+        version: 1.0.6(typescript@5.1.3)
       find-chrome-bin:
         specifier: ^1.0.5
         version: 1.0.5
@@ -720,8 +720,8 @@ packages:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.15.0
 
-  /@pawanpaudel93/single-file@1.0.5(typescript@5.1.3):
-    resolution: {integrity: sha512-WvTsJLaH/0AOI01UKveDj6xc3+jGAUiIj4eM2rNGvyNQhxWNaWIZdfLKnDODtpGW4D/mAitQ6dMqoFJJnpQZyw==}
+  /@pawanpaudel93/single-file@1.0.6(typescript@5.1.3):
+    resolution: {integrity: sha512-oaTqMEhHZ8nR1KgjPq46/j08xc+S+LV4Xx5Suc/4l2FpzH3ytqRyX/9xpv+K46T3A0AHxLWOFBcDexoo+b1LGw==}
     dependencies:
       file-url: 3.0.0
       puppeteer-core: 19.7.5(typescript@5.1.3)

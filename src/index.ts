@@ -6,59 +6,18 @@ import { directory } from 'tempy'
 import { findChrome } from 'find-chrome-bin'
 import { BrowserFetcher } from 'puppeteer-core'
 import { saveSingleFile } from '@pawanpaudel93/single-file'
-
-export interface SaveResult {
-  status: 'success' | 'error'
-  message: string
-  savedFolderPath: string
-  webpage: string
-  screenshot?: string
-  title: string
-  timestamp: number
-}
-
-export interface BrowserlessOptions {
-  apiKey: string
-  blockAds?: boolean
-  stealth?: boolean
-  userDataDir?: string
-  keepalive?: number
-  ignoreDefaultArgs?: string
-  timeout?: number
-}
-
-export interface HtmlScreenshotSaverOptions {
-  headless?: boolean
-  height?: number
-  width?: number
-  userAgent?: string
-  saveScreenshot: boolean
-  httpProxy?: {
-    server?: string
-    username?: string
-    password?: string
-  }
-  browserlessOptions?: BrowserlessOptions
-}
+import type { BrowserlessOptions, HtmlScreenshotSaverOptions, SaveResult } from './types'
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
 
 const defaultOptions: HtmlScreenshotSaverOptions = {
-  headless: true,
-  height: 1080,
-  width: 1920,
+  browserHeight: 1080,
+  browserWidth: 1920,
   userAgent: DEFAULT_USER_AGENT,
-  saveScreenshot: false,
-  httpProxy: {
-    server: '',
-    username: '',
-    password: '',
-  },
 }
 
 export class HtmlScreenshotSaver {
-  private browserServer?: string
-  private browserOptions?: HtmlScreenshotSaverOptions
+  private browserOptions: HtmlScreenshotSaverOptions
 
   constructor(options?: HtmlScreenshotSaverOptions) {
     this.browserOptions = { ...defaultOptions, ...options }
@@ -67,7 +26,7 @@ export class HtmlScreenshotSaver {
 
   private processBrowserlessOptions(options?: BrowserlessOptions) {
     if (options?.apiKey)
-      this.browserServer = this.constructBrowserlessUrl(options)
+      this.browserOptions.browserServer = this.constructBrowserlessUrl(options)
   }
 
   private constructBrowserlessUrl(options: BrowserlessOptions): string {
@@ -83,8 +42,8 @@ export class HtmlScreenshotSaver {
 
     const params: string[] = []
     params.push(`token=${apiKey}`)
-    if (this.browserOptions?.httpProxy?.server)
-      params.push(`--proxy-server=${this.browserOptions.httpProxy.server}`)
+    if (this.browserOptions?.httpProxyServer)
+      params.push(`--proxy-server=${this.browserOptions.httpProxyServer}`)
     if (blockAds)
       params.push('blockAds')
     if (stealth)
@@ -95,12 +54,12 @@ export class HtmlScreenshotSaver {
       params.push(`keepalive=${keepalive}`)
     if (ignoreDefaultArgs)
       params.push(`ignoreDefaultArgs=${ignoreDefaultArgs}`)
-    if (this.browserOptions?.headless !== undefined)
-      params.push(`headless=${this.browserOptions.headless}`)
+    if (this.browserOptions?.browserHeadless !== undefined)
+      params.push(`headless=${this.browserOptions.browserHeadless}`)
     if (timeout)
       params.push(`timeout=${timeout}`)
-    params.push(`--window-size=${this.browserOptions?.width},${this.browserOptions?.height}`)
-    params.push(`--user-agent=${this.browserOptions?.userAgent ?? DEFAULT_USER_AGENT}`)
+    params.push(`--window-size=${this.browserOptions?.browserWidth},${this.browserOptions?.browserHeight}`)
+    params.push(`--user-agent=${this.browserOptions?.userAgent}`)
 
     return `wss://chrome.browserless.io/?${params.join('&')}`
   }
@@ -151,31 +110,20 @@ export class HtmlScreenshotSaver {
 
   private async runBrowser({
     url,
-    basePath,
-    output,
+    outputDirectory,
   }: {
     url: string
-    basePath: string
-    output: string
+    outputDirectory: string
   }) {
-    const browserArgs = `["--no-sandbox", "--window-size=${this.browserOptions?.width},${this.browserOptions?.height}", "--start-maximized"]`
+    const browserArgs = `["--no-sandbox", "--window-size=${this.browserOptions?.browserWidth},${this.browserOptions?.browserHeight}", "--start-maximized"]`
     const options = {
-      basePath,
+      ...this.browserOptions,
+      outputDirectory,
       browserArgs,
       url,
-      output,
-      saveScreenshot: this.browserOptions?.saveScreenshot,
-      userAgent: this.browserOptions?.userAgent,
-      browserWidth: this.browserOptions?.width,
-      browserHeight: this.browserOptions?.height,
-      browserServer: this.browserServer,
-      browserHeadless: this.browserOptions?.headless,
-      httpProxyServer: this.browserOptions?.httpProxy?.server ?? '',
-      httpProxyUsername: this.browserOptions?.httpProxy?.username ?? '',
-      httpProxyPassword: this.browserOptions?.httpProxy?.password ?? '',
-    } as any
+    } as HtmlScreenshotSaverOptions
 
-    if (!this.browserServer)
+    if (!this.browserOptions.browserServer)
       options.browserExecutablePath = await this.getChromeExecutablePath()
 
     await saveSingleFile(options)
@@ -183,18 +131,17 @@ export class HtmlScreenshotSaver {
 
   public save = async (
     url: string,
-    folderPath?: string,
+    outputDirectory?: string,
   ): Promise<SaveResult> => {
     try {
-      if (!folderPath)
-        folderPath = directory()
+      if (!outputDirectory)
+        outputDirectory = directory()
 
-      await fsPromises.access(folderPath)
+      await fsPromises.access(outputDirectory)
 
       await this.runBrowser({
         url,
-        basePath: folderPath as string,
-        output: path.resolve(folderPath, 'index.html'),
+        outputDirectory: outputDirectory as string,
       })
 
       const metadata: {
@@ -202,7 +149,7 @@ export class HtmlScreenshotSaver {
         url: string
       } = JSON.parse(
         (
-          await this.readFileAsBuffer(path.join(folderPath, 'metadata.json'))
+          await this.readFileAsBuffer(path.join(outputDirectory, 'metadata.json'))
         ).toString(),
       )
       const timestamp = Math.floor(Date.now() / 1000)
@@ -210,16 +157,16 @@ export class HtmlScreenshotSaver {
       return {
         status: 'success',
         message: 'Saved successfully',
-        savedFolderPath: folderPath,
-        webpage: path.join(folderPath, 'index.html'),
-        screenshot: this.browserOptions?.saveScreenshot ? path.join(folderPath, 'screenshot.png') : undefined,
+        savedFolderPath: outputDirectory,
+        webpage: path.join(outputDirectory, 'index.html'),
+        screenshot: this.browserOptions?.saveScreenshot ? path.join(outputDirectory, 'screenshot.png') : undefined,
         title: metadata.title,
         timestamp,
       }
     }
     catch (error) {
-      if (folderPath)
-        await fsPromises.rm(folderPath, { recursive: true, force: true })
+      if (outputDirectory)
+        await fsPromises.rm(outputDirectory, { recursive: true, force: true })
 
       return {
         status: 'error',

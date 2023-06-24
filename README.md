@@ -71,12 +71,12 @@ The `options` parameter is an object with the following properties:
 The save method captures the html and screenshot of the specified URL and saves it to the specified folder path:
 
 ```ts
-const result: SaveResult = await saver.save(url, folderPath)
+const result: SaveResult = await saver.save(url, outputDirectory)
 ```
 
 The `url` parameter is the URL of the webpage to capture.
 
-The `folderPath` parameter is optional and specifies the folder path where the screenshot and related files will be saved. If not provided, a temporary directory will be used.
+The `outputDirectory` parameter is optional and specifies the folder path where the screenshot and related files will be saved. If not provided, a temporary directory will be used.
 
 The method returns a `SaveResult` object with the following properties:
 
@@ -97,7 +97,7 @@ import { HtmlScreenshotSaver } from 'save-html-screenshot'
 
 const apiKey = 'your-api-key'
 const url = 'https://example.com'
-const folderPath = '/path/to/save'
+const outputDirectory = '/path/to/save'
 
 const options = {
   browserlessOptions: {
@@ -107,7 +107,7 @@ const options = {
 
 const saver = new HtmlScreenshotSaver(options)
 
-const result = await saver.save(url, folderPath)
+const result = await saver.save(url, outputDirectory)
 if (result.status === 'success') {
   console.log('Screenshot saved successfully!')
   console.log('Webpage:', result.webpage)
@@ -128,11 +128,11 @@ Without using browserless,
 import { HtmlScreenshotSaver } from 'save-html-screenshot'
 
 const url = 'https://example.com'
-const folderPath = '/path/to/save'
+const outputDirectory = '/path/to/save'
 
 const saver = new HtmlScreenshotSaver()
 
-const result = saver.save(url, folderPath)
+const result = saver.save(url, outputDirectory)
 if (result.status === 'success') {
   console.log('Screenshot saved successfully!')
   console.log('Webpage:', result.webpage)
