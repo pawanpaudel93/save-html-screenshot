@@ -54,12 +54,16 @@ See here on what options can be passed: [HtmlScreenshotSaverOptions](https://git
 The save method captures the html and screenshot of the specified URL and saves it to the specified folder path:
 
 ```ts
-const result: SaveResult = await saver.save(url, outputDirectory)
+const result: SaveResult = await saver.save(url, options)
 ```
 
 The `url` parameter is the URL of the webpage to capture.
 
-The `outputDirectory` parameter is optional and specifies the folder path where the screenshot and related files will be saved. If not provided, a temporary directory will be used.
+The `options` parameter is optional with the following:
+
+- `outputDirectory` (Optional): It specifies the folder path where the screenshot and related files will be saved. If not provided, a temporary directory will be used.
+- `outputHtmlFilename` (Optional): Output HTML filename. If not provided, `index.html` will be used.
+- `outputScreenshotFilename` (Optional): Output Screenshot filename. If not provided, `screenshot.png` will be used.
 
 The method returns a `SaveResult` object with the following properties:
 
@@ -80,7 +84,11 @@ import { HtmlScreenshotSaver } from 'save-html-screenshot'
 
 const apiKey = 'your-api-key'
 const url = 'https://example.com'
-const outputDirectory = '/path/to/save'
+const saveOptions = {
+  outputDirectory: '/path/to/save',
+  outputHtmlFilename: 'save.html',
+  outputScreenshotFilename: 'save.png'
+}
 
 const options = {
   browserlessOptions: {
@@ -90,7 +98,7 @@ const options = {
 
 const saver = new HtmlScreenshotSaver(options)
 
-const result = await saver.save(url, outputDirectory)
+const result = await saver.save(url, saveOptions)
 if (result.status === 'success') {
   console.log('Screenshot saved successfully!')
   console.log('Webpage:', result.webpage)
@@ -111,11 +119,10 @@ Without using browserless,
 import { HtmlScreenshotSaver } from 'save-html-screenshot'
 
 const url = 'https://example.com'
-const outputDirectory = '/path/to/save'
 
 const saver = new HtmlScreenshotSaver()
 
-const result = saver.save(url, outputDirectory)
+const result = saver.save(url)
 if (result.status === 'success') {
   console.log('Screenshot saved successfully!')
   console.log('Webpage:', result.webpage)
