@@ -8,7 +8,7 @@ import { BrowserFetcher } from 'puppeteer-core'
 import { saveSingleFile } from '@pawanpaudel93/single-file'
 import type { BrowserlessOptions, HtmlScreenshotSaverOptions, SaveResult } from './types'
 
-const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
 
 const defaultOptions: HtmlScreenshotSaverOptions = {
   browserHeight: 1080,
@@ -153,20 +153,28 @@ export class HtmlScreenshotSaver {
    * @param {Object} params - The parameters for running the browser.
    * @param {string} params.url - The URL to save.
    * @param {string} params.outputDirectory - The output directory to save the files.
+   * @param {string} params.outputHtmlFilename - The output html filename.
+   * @param {string} params.outputScreenshotFilename - The output screenshot filename.
    * @returns {Promise<void>} A promise that resolves when the browser has finished saving the files.
    */
   private async runBrowser({
     url,
     outputDirectory,
+    outputHtmlFilename,
+    outputScreenshotFilename,
   }: {
     url: string
     outputDirectory: string
+    outputHtmlFilename: string
+    outputScreenshotFilename: string
   }): Promise<void> {
     const browserArgs = `["--no-sandbox", "--window-size=${this.browserOptions?.browserWidth},${this.browserOptions?.browserHeight}", "--start-maximized"]`
     const options = {
       browserArgs,
       ...this.browserOptions,
       outputDirectory,
+      outputHtmlFilename,
+      outputScreenshotFilename,
       url,
     } as HtmlScreenshotSaverOptions
 
@@ -178,25 +186,39 @@ export class HtmlScreenshotSaver {
 
   /**
    * Saves the HTML and screenshot.
-   * @public
+   *
    * @param {string} url - The URL to save.
-   * @param {string} [outputDirectory] - The output directory to save the files. If not specified, a temporary directory will be created.
+   * @param [options] - Output options
+   * @param {string} options.outputDirectory - The output directory to save the files.
+   * @param {string} options.outputHtmlFilename - The output html filename.
+   * @param {string} options.outputScreenshotFilename - The output screenshot filename.
    * @returns {Promise<SaveResult>} A promise that resolves with the result of the save operation.
    */
-
   public save = async (
     url: string,
-    outputDirectory?: string,
+    options?: {
+      outputDirectory?: string
+      outputHtmlFilename?: string
+      outputScreenshotFilename?: string
+    },
   ): Promise<SaveResult> => {
-    try {
-      if (!outputDirectory)
-        outputDirectory = directory()
+    const outputDirectory = options?.outputDirectory || this.browserOptions.outputDirectory || directory()
+    const outputHtmlFilename = options?.outputHtmlFilename || this.browserOptions.outputHtmlFilename || 'index.html'
+    const outputScreenshotFilename = options?.outputScreenshotFilename || this.browserOptions.outputScreenshotFilename || 'screenshot.png'
 
-      await fsPromises.access(outputDirectory)
+    try {
+      try {
+        await fsPromises.access(outputDirectory)
+      }
+      catch (e) {
+        await fsPromises.mkdir(outputDirectory, { recursive: true })
+      }
 
       await this.runBrowser({
         url,
-        outputDirectory: outputDirectory as string,
+        outputDirectory,
+        outputHtmlFilename,
+        outputScreenshotFilename,
       })
 
       const metadata: {
@@ -213,8 +235,8 @@ export class HtmlScreenshotSaver {
         status: 'success',
         message: 'Saved successfully',
         savedDirectory: outputDirectory,
-        webpage: path.join(outputDirectory, 'index.html'),
-        screenshot: this.browserOptions?.saveScreenshot ? path.join(outputDirectory, 'screenshot.png') : undefined,
+        webpage: path.join(outputDirectory, outputHtmlFilename),
+        screenshot: this.browserOptions?.saveScreenshot ? path.join(outputDirectory, outputScreenshotFilename) : undefined,
         title: metadata.title,
         timestamp,
       }
