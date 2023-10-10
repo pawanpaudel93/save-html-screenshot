@@ -48,6 +48,16 @@ export interface HtmlScreenshotSaverOptions {
    */
   outputDirectory?: string
   /**
+   * Custom filename for html.
+   * @default "index.html"
+   */
+  outputHtmlFilename?: string
+  /**
+   * Custom filename for screenshot.
+   * @default "screenshot.png"
+   */
+  outputScreenshotFilename?: string
+  /**
    * User agent of browser.
    * @default ""
    */
@@ -152,36 +162,6 @@ export interface HtmlScreenshotSaverOptions {
    * @default false
    */
   compressHTML?: boolean
-  /**
-   * Whether to dump the content of the page.
-   * @default false
-   */
-  dumpContent?: boolean
-  /**
-   * Template used to generate the output filename (see help page of the extension for more info).
-   * @default '{page-title} ({date-iso} {time-locale}).html'
-   */
-  filenameTemplate?: string
-  /**
-   * Action when the filename is conflicting with an existing one on the filesystem. The possible values are "uniquify" (default), "overwrite", and "skip".
-   * @default "uniquify"
-   */
-  filenameConflictAction?: 'uniquify' | 'overwrite' | 'skip'
-  /**
-   * The character used for replacing invalid characters in filenames.
-   * @default "_"
-   */
-  filenameReplacementCharacter?: string
-  /**
-   * Maximum length of the filename.
-   * @default 192
-   */
-  filenameMaxLength?: number
-  /**
-   * Specify the unit of the maximum length of the filename ('bytes' or 'chars').
-   * @default "bytes"
-   */
-  filenameMaxLengthUnit?: 'bytes' | 'chars'
   /**
    * Group duplicate images into CSS custom properties.
    * @default true
